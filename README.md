@@ -1,10 +1,10 @@
 # airflow-ml-pipeline
-play area for using airflow to orchestrate data ETL and ml pipeline training
+A play area for using airflow to orchestrate data ETL and ml pipeline training.
 
 ### Airflow set up
 
 The docker set up for airflow is a little involved. The (docker compose file)[./docker-compose.yaml] and instructions to run are pulled from the
-[airflow website](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html).
+[airflow website](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html) - accessed Dec 2022.
 
 The docker compose file is a little complicated, and will require docker compose v1.29 or above. Instructions for installing
 compose as a plugin are linked from the [airflow website](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html),
