@@ -13,3 +13,5 @@ The steps described in the [Running Airflow in Docker](https://airflow.apache.or
 - set up the folders and airflow user to be the local user
 - initialize the airflow database
 - start all airflow services
+
+Once everything is up and running, the UI on the webserver can be accessed at http://localhost:8080 with username alice password bob.
