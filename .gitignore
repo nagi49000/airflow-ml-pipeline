@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Airflow folders and files
+.env
+dags/
+logs/
+plugins/
