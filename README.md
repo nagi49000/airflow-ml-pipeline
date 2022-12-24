@@ -10,7 +10,11 @@ The docker compose file is a little complicated, and will require docker compose
 compose as a plugin are linked from the [airflow website](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html),
 or can be accessed directly [here](https://docs.docker.com/compose/install/).
 The steps described in the [Running Airflow in Docker](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html) notes are
-- set up the folders and airflow user to be the local user
+- set up the folders and airflow user to be the local user with
+```
+mkdir -p ./dags ./logs ./plugins
+echo -e "AIRFLOW_UID=$(id -u)" > .env
+```
 - initialize the airflow database
 - start all airflow services
 
