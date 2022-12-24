@@ -19,3 +19,8 @@ echo -e "AIRFLOW_UID=$(id -u)" > .env
 - start all airflow services with `docker compose up`
 
 Once everything is up and running, the UI on the webserver can be accessed at http://localhost:8080 with username alice password bob.
+
+To clean up the set up as a 'nuke from orbit' option, use
+```
+docker compose down --volumes --remove-orphans
+```
