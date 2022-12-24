@@ -15,7 +15,7 @@ The steps described in the [Running Airflow in Docker](https://airflow.apache.or
 mkdir -p ./dags ./logs ./plugins
 echo -e "AIRFLOW_UID=$(id -u)" > .env
 ```
-- initialize the airflow database
-- start all airflow services
+- initialize the airflow database with `docker compose up airflow-init`
+- start all airflow services with `docker compose up`
 
 Once everything is up and running, the UI on the webserver can be accessed at http://localhost:8080 with username alice password bob.
