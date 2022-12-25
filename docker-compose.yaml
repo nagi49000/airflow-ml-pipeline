@@ -152,6 +152,8 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    links:
+      - "line-samples:line-samples"
 
   airflow-triggerer:
     <<: *airflow-common
@@ -278,6 +280,16 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+
+  # BEGIN custom services not from airflow
+  line-samples:
+    build:
+      context: services/linear-data-generator/
+      dockerfile: Dockerfile
+    ports:
+      - 6780:6780
+
+  # END custom services not from airflow
 
 volumes:
   postgres-db-volume:
