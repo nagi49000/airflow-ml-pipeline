@@ -146,7 +146,7 @@ services:
       # Required to handle warm shutdown of the celery workers properly
       # See https://airflow.apache.org/docs/docker-stack/entrypoint.html#signal-propagation
       DUMB_INIT_SETSID: "0"
-      _PIP_ADDITIONAL_REQUIREMENTS: "numpy scikit-learn pandas"
+      _PIP_ADDITIONAL_REQUIREMENTS: "scikit-learn==1.2.0"
     restart: always
     depends_on:
       <<: *airflow-common-depends-on
