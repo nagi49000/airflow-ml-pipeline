@@ -25,4 +25,4 @@ RUN pip install -r requirements.txt && \
     chown -R app:app ${APP_HOME} && \
     chmod -R 755 ${APP_HOME}
 
-CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "api.api_app:app", "--bind", "0.0.0.0:6780", "--log-level", "DEBUG"]
+CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "api.api_app:app", "--bind", "0.0.0.0:6780", "--log-level", "INFO"]

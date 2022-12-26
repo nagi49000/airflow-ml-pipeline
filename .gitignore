@@ -130,6 +130,5 @@ dmypy.json
 
 # Airflow folders and files
 .env
-dags/
 logs/
 plugins/
