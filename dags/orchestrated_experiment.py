@@ -65,10 +65,17 @@ def evaluate_lin_reg_model(lin_reg):
     import mlflow
     import mlflow.sklearn
     mlflow.set_tracking_uri(mlflow_server)
-    mlflow.set_experiment("my-experiment")
-    mlflow.log_metric("training-R2-score", r2_train)
-    mlflow.log_metric("test-R2-score", r2_test)
+    mlflow.set_experiment("alpha_orchestrated_experiment")
+    mlflow.log_metrics({
+        "training-R2-score": r2_train,
+        "test-R2-score": r2_test
+    })
+    mlflow.log_params({
+        "coefficient": lin_reg.coef_,
+        "intercept": lin_reg.intercept_
+    })
     mlflow.sklearn.log_model(lin_reg, "model")
+    mlflow.end_run()
     logging.info("sent experiment details to mlflow")
 
 
