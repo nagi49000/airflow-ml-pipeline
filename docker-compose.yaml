@@ -288,6 +288,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - 6780:6780
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:6780/hello"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
 
   # END custom services not from airflow
 

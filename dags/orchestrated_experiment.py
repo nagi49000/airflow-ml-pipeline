@@ -76,11 +76,11 @@ def validate_data():
 def train():
     logging.info(f"training lin reg on data in {raw_samples_filename}")
     x, y = get_x_matrix_y_vector_from_json(raw_samples_filename)
-    reg = get_trained_model(x, y)
+    lin_reg = get_trained_model(x, y)
 
     import pickle
     with open(model_filename, "wb") as f:
-        pickle.dump(reg, f)
+        pickle.dump(lin_reg, f)
     logging.info(f"wrote lin reg model to {model_filename}")
 
 
@@ -88,8 +88,8 @@ def evaluate():
     logging.info(f"evaluating model {model_filename} with data {test_samples_filename}")
     import pickle
     with open(model_filename, "rb") as f:
-        reg = pickle.load(f)
-    evaluate_lin_reg_model(reg)
+        lin_reg = pickle.load(f)
+    evaluate_lin_reg_model(lin_reg)
 
 
 # Define some arguments for our DAG

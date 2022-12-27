@@ -19,10 +19,14 @@ WORKDIR ${APP_HOME}
 COPY --from=builder ${HOME}/test/requirements.txt requirements.txt
 COPY --from=builder ${HOME}/test/api/src/api ./api
 
-RUN pip install -r requirements.txt && \
+RUN apt-get update && \
+    apt-get install -y curl && \
+    pip install -r requirements.txt && \
     groupadd --system app && \
     useradd -g app --system app && \
     chown -R app:app ${APP_HOME} && \
     chmod -R 755 ${APP_HOME}
+
+USER app
 
 CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "api.api_app:app", "--bind", "0.0.0.0:6780", "--log-level", "INFO"]
