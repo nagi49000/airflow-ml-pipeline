@@ -146,7 +146,7 @@ services:
       # Required to handle warm shutdown of the celery workers properly
       # See https://airflow.apache.org/docs/docker-stack/entrypoint.html#signal-propagation
       DUMB_INIT_SETSID: "0"
-      _PIP_ADDITIONAL_REQUIREMENTS: "scikit-learn==1.2.0"
+      _PIP_ADDITIONAL_REQUIREMENTS: "mlflow==2.1.1"
     restart: always
     depends_on:
       <<: *airflow-common-depends-on
@@ -154,6 +154,7 @@ services:
         condition: service_completed_successfully
     links:
       - "line-samples:line-samples"
+      - "mlflow-server:mlflow-server"
 
   airflow-triggerer:
     <<: *airflow-common
@@ -282,6 +283,7 @@ services:
         condition: service_completed_successfully
 
   # BEGIN custom services not from airflow
+
   line-samples:
     build:
       context: services/linear-data-generator/
@@ -290,6 +292,19 @@ services:
       - 6780:6780
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:6780/hello"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  mlflow-server:
+    build:
+      context: services/mlflow-server/
+      dockerfile: Dockerfile
+    ports:
+      - 5000:5000
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5000"]
       interval: 10s
       timeout: 10s
       retries: 5
