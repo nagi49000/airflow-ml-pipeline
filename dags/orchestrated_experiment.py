@@ -7,11 +7,13 @@ import json
 import logging
 
 
+# fixed vars used in helper functions
 raw_samples_filename = "/tmp/raw-samples.json"
 test_samples_filename = "/tmp/test-samples.json"
 model_filename = "/tmp/lin-reg-model.pickle"
 
 
+# various helper functions for Airflow Python callables
 def get_samples(n_samples, filename):
     url = "http://line-samples:6780/get-samples"
     logging.info(f"pulling {n_samples} samples from {url}")
@@ -43,6 +45,24 @@ def get_x_matrix_y_vector_from_json(filename):
     return x, y
 
 
+def get_trained_model(x, y):
+    from sklearn.linear_model import LinearRegression
+    logging.info(f"training lin reg on {len(y)} samples")
+    lin_reg = LinearRegression().fit(x, y)
+    logging.info(f"lin reg trained with coefficient {lin_reg.coef_} and intercept {lin_reg.intercept_}")
+    return lin_reg
+
+
+def evaluate_lin_reg_model(lin_reg):
+    x_train, y_train = get_x_matrix_y_vector_from_json(raw_samples_filename)
+    x_test, y_test = get_x_matrix_y_vector_from_json(test_samples_filename)
+    r2_train = lin_reg.score(x_train, y_train)
+    r2_test = lin_reg.score(x_test, y_test)
+    logging.info(f"training R^2 score = {r2_train}")
+    logging.info(f"test R^2 score = {r2_test}")
+
+
+# Python callables used in Airflow DAG task definitions
 def ingest_data(n_samples_raw=1000, n_samples_test=200):
     get_samples(n_samples_raw, raw_samples_filename)
     get_samples(n_samples_test, test_samples_filename)
@@ -55,12 +75,10 @@ def validate_data():
 
 def train():
     logging.info(f"training lin reg on data in {raw_samples_filename}")
-    from sklearn.linear_model import LinearRegression
-    import pickle
-
     x, y = get_x_matrix_y_vector_from_json(raw_samples_filename)
-    reg = LinearRegression().fit(x, y)
+    reg = get_trained_model(x, y)
 
+    import pickle
     with open(model_filename, "wb") as f:
         pickle.dump(reg, f)
     logging.info(f"wrote lin reg model to {model_filename}")
@@ -69,16 +87,10 @@ def train():
 def evaluate():
     logging.info(f"evaluating model {model_filename} with data {test_samples_filename}")
     import pickle
-
     with open(model_filename, "rb") as f:
         reg = pickle.load(f)
+    evaluate_lin_reg_model(reg)
 
-    x_train, y_train = get_x_matrix_y_vector_from_json(raw_samples_filename)
-    x_test, y_test = get_x_matrix_y_vector_from_json(test_samples_filename)
-    r2_train = reg.score(x_train, y_train)
-    r2_test = reg.score(x_test, y_test)
-    logging.info(f"training R^2 score = {r2_train}")
-    logging.info(f"test R^2 score = {r2_test}")
 
 # Define some arguments for our DAG
 default_args = {
