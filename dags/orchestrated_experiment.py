@@ -62,6 +62,15 @@ def evaluate_lin_reg_model(lin_reg):
     logging.info(f"training R^2 score = {r2_train}")
     logging.info(f"test R^2 score = {r2_test}")
 
+    import mlflow
+    import mlflow.sklearn
+    mlflow.set_tracking_uri(mlflow_server)
+    mlflow.set_experiment("my-experiment")
+    mlflow.log_metric("training-R2-score", r2_train)
+    mlflow.log_metric("test-R2-score", r2_test)
+    mlflow.sklearn.log_model(lin_reg, "model")
+    logging.info("sent experiment details to mlflow")
+
 
 # Python callables used in Airflow DAG task definitions
 def ingest_data(n_samples_raw=1000, n_samples_test=200):
@@ -78,18 +87,6 @@ def train():
     logging.info(f"training lin reg on data in {raw_samples_filename}")
     x, y = get_x_matrix_y_vector_from_json(raw_samples_filename)
     lin_reg = get_trained_model(x, y)
-
-    import pickle
-    with open(model_filename, "wb") as f:
-        pickle.dump(lin_reg, f)
-    logging.info(f"wrote lin reg model to {model_filename}")
-
-
-def evaluate():
-    logging.info(f"evaluating model {model_filename} with data {test_samples_filename}")
-    import pickle
-    with open(model_filename, "rb") as f:
-        lin_reg = pickle.load(f)
     evaluate_lin_reg_model(lin_reg)
 
 
@@ -131,10 +128,10 @@ with dag:
         python_callable=train
     )
 
-    model_evaluation_task = PythonOperator(
-        task_id='model_evaluation',
-        python_callable=evaluate
-    )
+    # model_evaluation_task = PythonOperator(
+    #    task_id='model_evaluation',
+    #    python_callable=evaluate
+    # )
 
     # model_deployment_task = PythonOperator(
     #    task_id='model_deployment',
@@ -143,4 +140,4 @@ with dag:
  
     # data_ingestion_task >> data_validation_task >> data_preparation_task >> model_training_task >> model_evaluation_task >> model_deployment_task
 
-    data_ingestion_task >> data_validation_task >> model_training_task >> model_evaluation_task
+    data_ingestion_task >> data_validation_task >> model_training_task
