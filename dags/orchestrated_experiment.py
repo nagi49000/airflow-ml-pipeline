@@ -11,6 +11,7 @@ import logging
 raw_samples_filename = "/tmp/raw-samples.json"
 test_samples_filename = "/tmp/test-samples.json"
 model_filename = "/tmp/lin-reg-model.pickle"
+mlflow_server = "http://mlflow-server:5000"
 
 
 # various helper functions for Airflow Python callables
@@ -135,12 +136,11 @@ with dag:
         python_callable=evaluate
     )
 
-    """
-    model_deployment_task = PythonOperator(
-        task_id='model_deployment',
-        python_callable=deploy
-    )
+    # model_deployment_task = PythonOperator(
+    #    task_id='model_deployment',
+    #    python_callable=deploy
+    # )
  
-    data_ingestion_task >> data_validation_task >> data_preparation_task >> model_training_task >> model_evaluation_task >> model_deployment_task
-    """
+    # data_ingestion_task >> data_validation_task >> data_preparation_task >> model_training_task >> model_evaluation_task >> model_deployment_task
+
     data_ingestion_task >> data_validation_task >> model_training_task >> model_evaluation_task
