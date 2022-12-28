@@ -24,3 +24,13 @@ To clean up the set up as a 'nuke from orbit' option, use
 ```
 docker compose down --volumes --remove-orphans
 ```
+
+### Running ML experiments
+
+The custom containers running include a MLFlow server, and a simple API that generates numbers on a line, in the x interval \[0, 1\].
+There is a simple DAG that takes samples from that API, builds a model, and submits the experiment to MLFlow. The experiment can
+be triggered manually.
+
+Once the services are up, the DAGs and triggering thereof can be accessed from the (Airflow webserver UI)[http://localhost:8080/], and
+the experiment results and storage on the (MLFlow UI)[http://localhost:5000/]. The random sample generator API also has
+(swagger docs)[http://localhost:6780/docs].

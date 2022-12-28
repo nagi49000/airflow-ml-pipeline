@@ -1,5 +1,6 @@
 from datetime import timedelta
 from airflow import DAG
+from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 import requests
@@ -10,7 +11,6 @@ import logging
 # fixed vars used in helper functions
 raw_samples_filename = "/tmp/raw-samples.json"
 test_samples_filename = "/tmp/test-samples.json"
-model_filename = "/tmp/lin-reg-model.pickle"
 mlflow_server = "http://mlflow-server:5000"
 
 
@@ -47,7 +47,9 @@ def get_x_matrix_y_vector_from_json(filename):
 
 
 def get_trained_model(x, y):
+    import os
     from sklearn.linear_model import LinearRegression
+
     logging.info(f"training lin reg on {len(y)} samples")
     lin_reg = LinearRegression().fit(x, y)
     logging.info(f"lin reg trained with coefficient {lin_reg.coef_} and intercept {lin_reg.intercept_}")
@@ -99,49 +101,49 @@ def train():
 
 # Define some arguments for our DAG
 default_args = {
-    'owner': 'alice',
-    'depends_on_past': False,
-    'start_date': days_ago(0),
-    'retries': 1,
-    'retry_delay': timedelta(seconds=20)
+    "owner": "alice",
+    "depends_on_past": False,
+    "start_date": days_ago(0),
+    "retries": 1,
+    "retry_delay": timedelta(seconds=20)
 }
 
 # Instantiate our DAG
 dag = DAG(
-    'alpha_orchestrated_experiment',
+    "alpha_orchestrated_experiment",
     default_args=default_args,
-    description='A ML orchestrated experiment',
+    description="A ML orchestrated experiment",
     schedule_interval=timedelta(days=1),
 )
 
 with dag:
     data_ingestion_task = PythonOperator(
-        task_id='data_ingestion',
+        task_id="data_ingestion",
         python_callable=ingest_data
     )
 
     data_validation_task = PythonOperator(
-        task_id='data_validation',
+        task_id="data_validation",
         python_callable=validate_data
     )
 
     # data_preparation_task = PythonOperator(
-    #    task_id='data_preparation',
+    #    task_id="data_preparation",
     #    python_callable=prepare_data
     # )
 
     model_training_task = PythonOperator(
-        task_id='model_training',
+        task_id="model_training",
         python_callable=train
     )
 
     # model_evaluation_task = PythonOperator(
-    #    task_id='model_evaluation',
+    #    task_id="model_evaluation",
     #    python_callable=evaluate
     # )
 
     # model_deployment_task = PythonOperator(
-    #    task_id='model_deployment',
+    #    task_id="model_deployment",
     #    python_callable=deploy
     # )
  
