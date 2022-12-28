@@ -12,6 +12,7 @@ import logging
 raw_samples_filename = "/tmp/raw-samples.json"
 test_samples_filename = "/tmp/test-samples.json"
 mlflow_server = "http://mlflow-server:5000"
+model_git_url = "https://github.com/nagi49000/airflow-ml-pipeline-alpha-orchestrated-model.git"
 
 
 # various helper functions for Airflow Python callables
@@ -47,11 +48,24 @@ def get_x_matrix_y_vector_from_json(filename):
 
 
 def get_trained_model(x, y):
-    import os
-    from sklearn.linear_model import LinearRegression
+    from os import path
+    from shutil import rmtree
+    from git import Repo
+    from random import randint
+    from importlib import import_module
 
+    # make up a name for pulling down a repo with the model into the dags folder
+    repo_name = f"model_repo_{randint(10000, 99999)}"
+    repo_dir_and_name = path.join("dags", repo_name)
+    try:
+        logging.info(f"cloning {model_git_url} to {repo_dir_and_name}")
+        Repo.clone_from(model_git_url, repo_dir_and_name)
+        model_module = import_module(f"{repo_name}.python.model.model")  # known path inside repo
+        lin_reg = model_module.get_model()  # known function inside repo
+    finally:
+        rmtree(repo_dir_and_name)  # clean up after ourselves
     logging.info(f"training lin reg on {len(y)} samples")
-    lin_reg = LinearRegression().fit(x, y)
+    lin_reg.fit(x, y)
     logging.info(f"lin reg trained with coefficient {lin_reg.coef_} and intercept {lin_reg.intercept_}")
     return lin_reg
 
