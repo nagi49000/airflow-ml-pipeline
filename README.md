@@ -27,7 +27,7 @@ docker compose down --volumes --remove-orphans
 
 ### Running ML experiments
 
-The custom containers running include a MLFlow server, and a simple API that generates numbers on a line, in the x interval \[0, 1\].
+The custom containers running include a MLFlow server, and a simple API that generates numbers on a line (with some noise), in the x interval \[0, 1\].
 There is a simple DAG that takes samples from that API, builds a model, and submits the experiment to MLFlow. The experiment can
 be triggered manually.
 
