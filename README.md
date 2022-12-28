@@ -3,7 +3,7 @@ A play area for using airflow to orchestrate data ETL and ml pipeline training.
 
 ### Airflow set up
 
-The docker set up for airflow is a little involved. The (docker compose file)[./docker-compose.yaml] and instructions to run are pulled from the
+The docker set up for airflow is a little involved. The [docker compose file](./docker-compose.yaml) and instructions to run are pulled from the
 [airflow website](https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html) - accessed Dec 2022.
 
 The docker compose file is a little complicated, and will require docker compose v1.29 or above. Instructions for installing
@@ -31,6 +31,6 @@ The custom containers running include a MLFlow server, and a simple API that gen
 There is a simple DAG that takes samples from that API, builds a model, and submits the experiment to MLFlow. The experiment can
 be triggered manually.
 
-Once the services are up, the DAGs and triggering thereof can be accessed from the (Airflow webserver UI)[http://localhost:8080/], and
-the experiment results and storage on the (MLFlow UI)[http://localhost:5000/]. The random sample generator API also has
-(swagger docs)[http://localhost:6780/docs].
+Once the services are up, the DAGs and triggering thereof can be accessed from the [Airflow webserver UI](http://localhost:8080/), and
+the experiment results and storage on the [MLFlow UI](http://localhost:5000/). The random sample generator API also has
+[swagger docs](http://localhost:6780/docs).
