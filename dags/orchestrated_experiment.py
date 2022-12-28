@@ -3,6 +3,7 @@ from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
+from typing import Tuple, List
 import requests
 import json
 import logging
@@ -11,12 +12,18 @@ import logging
 # fixed vars used in helper functions
 raw_samples_filename = "/tmp/raw-samples.json"
 test_samples_filename = "/tmp/test-samples.json"
-mlflow_server = "http://mlflow-server:5000"
+mlflow_server_url = "http://mlflow-server:5000"
 model_git_url = "https://github.com/nagi49000/airflow-ml-pipeline-alpha-orchestrated-model.git"
 
 
 # various helper functions for Airflow Python callables
-def get_samples(n_samples, filename):
+def get_samples(n_samples: int, filename: str) -> None:
+    """ Retrieves samples from the line-samples API as a POST
+ 
+        Params:
+            n_samples: number of (x, y) samples to retrieve
+            filename: name of the file to save the samples in a JSON
+    """
     url = "http://line-samples:6780/get-samples"
     logging.info(f"pulling {n_samples} samples from {url}")
     response = requests.post(url, json={"n_samples": n_samples})
@@ -26,7 +33,12 @@ def get_samples(n_samples, filename):
     logging.info(f"wrote raw samples to {filename}")
 
 
-def check_samples_json_file(filename):
+def check_samples_json_file(filename: str) -> None:
+    """ Check the json file saved from the line-samples API is ok
+
+        Params:
+            filename: name of the file with saved samples in a JSON
+    """
     logging.info(f"validating raw samples in {filename}")
     with open(filename, "rt") as f:
         j = json.load(f)
@@ -37,7 +49,15 @@ def check_samples_json_file(filename):
         assert isinstance(sample[1], float)
 
 
-def get_x_matrix_y_vector_from_json(filename):
+def get_x_matrix_y_vector_from_json(filename: str) -> Tuple:
+    """ Get an X and y from the samples JSON ready for model training
+
+        Params:
+            filename: name of the file with saved samples in a JSON
+
+        Returns:
+            Tuple(numpy.array, numpy.array) of X, y
+    """
     import numpy as np
     logging.info(f"reading samples from {filename}")
     with open(filename, "rt") as f:
@@ -47,7 +67,16 @@ def get_x_matrix_y_vector_from_json(filename):
     return x, y
 
 
-def get_model_and_gitsha(git_url):
+def get_model_and_gitsha(git_url: str, commit_id: str=None) -> Tuple:
+    """ Calls on the git url to pull down a code repo and initialise a model from the repo
+
+        Params:
+            git_url: URL to a git repo for cloning
+            commit_id: if specified, checks out the specified commit_id
+
+        Returns:
+            Tuple(sklearn model, str) of an initialised, untrained model and gitsha
+    """
     from os import path
     from shutil import rmtree
     from git import Repo
@@ -61,6 +90,8 @@ def get_model_and_gitsha(git_url):
     try:
         logging.info(f"cloning {git_url} to {repo_dir_and_name}")
         repo = Repo.clone_from(git_url, repo_dir_and_name)
+        if commit_id:
+            repo.git.checkout(commit_id)
         gitsha = repo.head.object.hexsha
         model_module = import_module(f"{repo_name}.python.model.model")  # known path inside repo
         lin_reg = model_module.get_model()  # known function inside repo
@@ -68,7 +99,15 @@ def get_model_and_gitsha(git_url):
         rmtree(repo_dir_and_name)  # clean up after ourselves
     return lin_reg, gitsha
 
-def train_and_evaluate_model(git_url):
+def train_and_evaluate_model(git_url: str, mlflow_server: str) -> None:
+    """ From the git URL, initialises a model, trains and tests, and
+        sends the results to MLFlow
+
+        Params:
+            git_url: URL to a git repo for cloning
+            mlflow_server: ML Flow server for registering the experiment
+
+    """
     lin_reg, gitsha = get_model_and_gitsha(git_url)
 
     x_train, y_train = get_x_matrix_y_vector_from_json(raw_samples_filename)
@@ -102,7 +141,7 @@ def train_and_evaluate_model(git_url):
 
 
 # Python callables used in Airflow DAG task definitions
-def ingest_data(n_samples_raw=1000, n_samples_test=200):
+def ingest_data(n_samples_raw: int=1000, n_samples_test: int=200):
     get_samples(n_samples_raw, raw_samples_filename)
     get_samples(n_samples_test, test_samples_filename)
 
@@ -113,7 +152,7 @@ def validate_data():
 
 
 def train():
-    train_and_evaluate_model(model_git_url)
+    train_and_evaluate_model(model_git_url, mlflow_server_url)
 
 
 # Define some arguments for our DAG
