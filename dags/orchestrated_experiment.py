@@ -47,7 +47,7 @@ def get_x_matrix_y_vector_from_json(filename):
     return x, y
 
 
-def get_trained_model(x, y):
+def get_model_and_gitsha(git_url):
     from os import path
     from shutil import rmtree
     from git import Repo
@@ -56,26 +56,30 @@ def get_trained_model(x, y):
 
     # make up a name for pulling down a repo with the model into the dags folder
     repo_name = f"model_repo_{randint(10000, 99999)}"
+    # need to clone into an area that can be picked up on sys.path, such as the DAGs folder
     repo_dir_and_name = path.join("dags", repo_name)
     try:
-        logging.info(f"cloning {model_git_url} to {repo_dir_and_name}")
-        Repo.clone_from(model_git_url, repo_dir_and_name)
+        logging.info(f"cloning {git_url} to {repo_dir_and_name}")
+        repo = Repo.clone_from(git_url, repo_dir_and_name)
+        gitsha = repo.head.object.hexsha
         model_module = import_module(f"{repo_name}.python.model.model")  # known path inside repo
         lin_reg = model_module.get_model()  # known function inside repo
     finally:
         rmtree(repo_dir_and_name)  # clean up after ourselves
-    logging.info(f"training lin reg on {len(y)} samples")
-    lin_reg.fit(x, y)
-    logging.info(f"lin reg trained with coefficient {lin_reg.coef_} and intercept {lin_reg.intercept_}")
-    return lin_reg
+    return lin_reg, gitsha
 
+def train_and_evaluate_model(git_url):
+    lin_reg, gitsha = get_model_and_gitsha(git_url)
 
-def evaluate_lin_reg_model(lin_reg):
     x_train, y_train = get_x_matrix_y_vector_from_json(raw_samples_filename)
-    x_test, y_test = get_x_matrix_y_vector_from_json(test_samples_filename)
+    logging.info(f"training lin reg on {len(y_train)} samples")
+    lin_reg.fit(x_train, y_train)
+    logging.info(f"lin reg trained with coefficient {lin_reg.coef_} and intercept {lin_reg.intercept_}")
     r2_train = lin_reg.score(x_train, y_train)
-    r2_test = lin_reg.score(x_test, y_test)
     logging.info(f"training R^2 score = {r2_train}")
+
+    x_test, y_test = get_x_matrix_y_vector_from_json(test_samples_filename)
+    r2_test = lin_reg.score(x_test, y_test)
     logging.info(f"test R^2 score = {r2_test}")
 
     import mlflow
@@ -88,11 +92,13 @@ def evaluate_lin_reg_model(lin_reg):
     })
     mlflow.log_params({
         "coefficient": lin_reg.coef_,
-        "intercept": lin_reg.intercept_
+        "intercept": lin_reg.intercept_,
+        "model-url": git_url,
+        "model-gitsha": gitsha
     })
     mlflow.sklearn.log_model(lin_reg, "model")
+    logging.info(f"sent experiment details to mlflow run {mlflow.active_run().info.run_name}")
     mlflow.end_run()
-    logging.info("sent experiment details to mlflow")
 
 
 # Python callables used in Airflow DAG task definitions
@@ -107,10 +113,7 @@ def validate_data():
 
 
 def train():
-    logging.info(f"training lin reg on data in {raw_samples_filename}")
-    x, y = get_x_matrix_y_vector_from_json(raw_samples_filename)
-    lin_reg = get_trained_model(x, y)
-    evaluate_lin_reg_model(lin_reg)
+    train_and_evaluate_model(model_git_url)
 
 
 # Define some arguments for our DAG
