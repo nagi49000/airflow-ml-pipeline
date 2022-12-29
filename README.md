@@ -25,6 +25,20 @@ To clean up the set up as a 'nuke from orbit' option, use
 docker compose down --volumes --remove-orphans
 ```
 
+The Airflow suite of containers consists of:
+- A webserver to allow viewing and managing of airflow DAGs - once live, can be accessed [here](http://localhost:8080/)
+- A triggerer
+- A scheduler
+- A worker (by default 1)
+- An init container (only for initialisation of databases etc)
+- A redis container
+- A postgres container
+- (Optionally) a flower container for monitoring - once live, can be accessed [here](http://localhost:5555/)
+
+There are also custom containers, for supplying raw data for model training, and model storage management:
+- A simple FastAPI app that generates random samples on a line - once live, can be accessed [here](http://localhost:6780/docs)
+- A MLFlow server - once live, can be accessed [here](http://localhost:5000/)
+
 ### Running ML experiments
 
 The custom containers running include a MLFlow server, and a simple API that generates numbers on a line (with some noise), in the x interval \[0, 1\].
