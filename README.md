@@ -31,6 +31,9 @@ The custom containers running include a MLFlow server, and a simple API that gen
 There is a simple DAG that takes samples from that API, builds a model, and submits the experiment to MLFlow. The experiment can
 be triggered manually.
 
+The model is defined in a separate git repo, which is pulled down as a part of the training stage. The version of the model/repo can
+be specified by git commit in the DAG config, which can be specified in the UI when triggering an experiment manually under "Trigger DAG w/ config".
+
 Once the services are up, the DAGs and triggering thereof can be accessed from the [Airflow webserver UI](http://localhost:8080/), and
 the experiment results and storage on the [MLFlow UI](http://localhost:5000/). The random sample generator API also has
 [swagger docs](http://localhost:6780/docs).
