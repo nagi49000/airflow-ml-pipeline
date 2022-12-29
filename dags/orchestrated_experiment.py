@@ -125,6 +125,9 @@ def train_and_evaluate_model(git_url: str, mlflow_server: str, git_commit_id: st
 
     import mlflow
     import mlflow.sklearn
+    from mlflow.models.signature import infer_signature
+
+    model_signature = infer_signature(x_train, y_train)
     mlflow.set_tracking_uri(mlflow_server)
     mlflow.set_experiment("alpha_orchestrated_experiment")
     mlflow.log_metrics({
@@ -141,7 +144,8 @@ def train_and_evaluate_model(git_url: str, mlflow_server: str, git_commit_id: st
     mlflow.sklearn.log_model(
         sk_model=lin_reg,
         artifact_path="lin-reg-sklearn-model",
-        registered_model_name="lin-reg-alpha-orchestrated-model"
+        registered_model_name="lin-reg-alpha-orchestrated-model",
+        signature=model_signature,
     )
     logging.info(f"sent experiment details to mlflow run {mlflow.active_run().info.run_name}")
     mlflow.end_run()
