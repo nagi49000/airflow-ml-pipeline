@@ -1,9 +1,8 @@
 from datetime import timedelta
 from airflow import DAG
-from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
-from typing import Tuple, List
+from typing import Tuple
 import requests
 import json
 import logging
@@ -19,7 +18,7 @@ model_git_url = "https://github.com/nagi49000/airflow-ml-pipeline-alpha-orchestr
 # various helper functions for Airflow Python callables
 def get_samples(n_samples: int, filename: str) -> None:
     """ Retrieves samples from the line-samples API as a POST
- 
+
         Params:
             n_samples: number of (x, y) samples to retrieve
             filename: name of the file to save the samples in a JSON
@@ -67,7 +66,7 @@ def get_x_matrix_y_vector_from_json(filename: str) -> Tuple:
     return x, y
 
 
-def get_model_and_gitsha(git_url: str, commit_id: str=None) -> Tuple:
+def get_model_and_gitsha(git_url: str, commit_id: str = None) -> Tuple:
     """ Calls on the git url to pull down a code repo and initialise a model from the repo
 
         Params:
@@ -100,7 +99,8 @@ def get_model_and_gitsha(git_url: str, commit_id: str=None) -> Tuple:
         rmtree(repo_dir_and_name)  # clean up after ourselves
     return lin_reg, gitsha
 
-def train_and_evaluate_model(git_url: str, mlflow_server: str, git_commit_id: str=None) -> None:
+
+def train_and_evaluate_model(git_url: str, mlflow_server: str, git_commit_id: str = None) -> None:
     """ From the git URL, initialises a model, trains and tests, and
         sends the results to MLFlow
 
@@ -144,7 +144,7 @@ def train_and_evaluate_model(git_url: str, mlflow_server: str, git_commit_id: st
 
 
 # Python callables used in Airflow DAG task definitions
-def ingest_data(n_samples_raw: int=1000, n_samples_test: int=200):
+def ingest_data(n_samples_raw: int = 1000, n_samples_test: int = 200):
     get_samples(n_samples_raw, raw_samples_filename)
     get_samples(n_samples_test, test_samples_filename)
 
@@ -192,7 +192,9 @@ with dag:
 
     model_training_task = PythonOperator(
         task_id="model_training",
-        op_kwargs = {"model_commit_id": "{{ params.model_commit_id }}"},
+        op_kwargs = {
+            "model_commit_id": "{{ params.model_commit_id }}"
+        },
         python_callable=train
     )
 
