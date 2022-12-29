@@ -138,7 +138,11 @@ def train_and_evaluate_model(git_url: str, mlflow_server: str, git_commit_id: st
         "model-gitsha": gitsha,
         "dag-param-model-commit-id": git_commit_id
     })
-    mlflow.sklearn.log_model(lin_reg, "model")
+    mlflow.sklearn.log_model(
+        sk_model=lin_reg,
+        artifact_path="lin-reg-sklearn-model",
+        registered_model_name="lin-reg-alpha-orchestrated-model"
+    )
     logging.info(f"sent experiment details to mlflow run {mlflow.active_run().info.run_name}")
     mlflow.end_run()
 
