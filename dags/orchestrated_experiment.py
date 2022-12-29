@@ -190,27 +190,10 @@ with dag:
         python_callable=validate_data
     )
 
-    # data_preparation_task = PythonOperator(
-    #    task_id="data_preparation",
-    #    python_callable=prepare_data
-    # )
-
     model_training_task = PythonOperator(
         task_id="model_training",
         op_kwargs = {"model_commit_id": "{{ params.model_commit_id }}"},
         python_callable=train
     )
-
-    # model_evaluation_task = PythonOperator(
-    #    task_id="model_evaluation",
-    #    python_callable=evaluate
-    # )
-
-    # model_deployment_task = PythonOperator(
-    #    task_id="model_deployment",
-    #    python_callable=deploy
-    # )
- 
-    # data_ingestion_task >> data_validation_task >> data_preparation_task >> model_training_task >> model_evaluation_task >> model_deployment_task
 
     data_ingestion_task >> data_validation_task >> model_training_task
