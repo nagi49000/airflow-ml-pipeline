@@ -100,7 +100,12 @@ def get_model_and_gitsha(git_url: str, commit_id: str = None) -> Tuple:
     return lin_reg, gitsha
 
 
-def train_and_evaluate_model(git_url: str, mlflow_server: str, git_commit_id: str = None) -> None:
+def train_and_evaluate_model(
+        git_url: str,
+        mlflow_server: str,
+        git_commit_id: str = None,
+        score_threshold: float = 0.85
+) -> None:
     """ From the git URL, initialises a model, trains and tests, and
         sends the results to MLFlow
 
@@ -108,7 +113,7 @@ def train_and_evaluate_model(git_url: str, mlflow_server: str, git_commit_id: st
             git_url: URL to a git repo for cloning
             mlflow_server: ML Flow server for registering the experiment
             git_commit_id: commit id (e.g. tag, branch, gitsha) to use on model repo. None inhibits
-
+            score_threshold: threshold of test score for whether or not to publish model to model registry
     """
     lin_reg, gitsha = get_model_and_gitsha(git_url, git_commit_id)
 
@@ -141,10 +146,16 @@ def train_and_evaluate_model(git_url: str, mlflow_server: str, git_commit_id: st
         "model-gitsha": gitsha,
         "dag-param-model-commit-id": git_commit_id
     })
+    # only register model if test score is above threshold
+    registered_model_name = "lin-reg-alpha-orchestrated-model" if r2_test > score_threshold else None
+    if registered_model_name:
+        logging.info(f"publishing model to registry entry {registered_model_name}")
+    else:
+        logging.info("model will not be published to model registry")
     mlflow.sklearn.log_model(
         sk_model=lin_reg,
         artifact_path="lin-reg-sklearn-model",
-        registered_model_name="lin-reg-alpha-orchestrated-model",
+        registered_model_name=registered_model_name,
         signature=model_signature,
     )
     logging.info(f"sent experiment details to mlflow run {mlflow.active_run().info.run_name}")
