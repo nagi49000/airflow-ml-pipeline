@@ -91,6 +91,7 @@ def get_model_and_gitsha(git_url: str, commit_id: str=None) -> Tuple:
         logging.info(f"cloning {git_url} to {repo_dir_and_name}")
         repo = Repo.clone_from(git_url, repo_dir_and_name)
         if commit_id:
+            logging.info(f"in repo checking out commit_id {commit_id}")
             repo.git.checkout(commit_id)
         gitsha = repo.head.object.hexsha
         model_module = import_module(f"{repo_name}.python.model.model")  # known path inside repo
@@ -99,16 +100,17 @@ def get_model_and_gitsha(git_url: str, commit_id: str=None) -> Tuple:
         rmtree(repo_dir_and_name)  # clean up after ourselves
     return lin_reg, gitsha
 
-def train_and_evaluate_model(git_url: str, mlflow_server: str) -> None:
+def train_and_evaluate_model(git_url: str, mlflow_server: str, git_commit_id: str=None) -> None:
     """ From the git URL, initialises a model, trains and tests, and
         sends the results to MLFlow
 
         Params:
             git_url: URL to a git repo for cloning
             mlflow_server: ML Flow server for registering the experiment
+            git_commit_id: commit id (e.g. tag, branch, gitsha) to use on model repo. None inhibits
 
     """
-    lin_reg, gitsha = get_model_and_gitsha(git_url)
+    lin_reg, gitsha = get_model_and_gitsha(git_url, git_commit_id)
 
     x_train, y_train = get_x_matrix_y_vector_from_json(raw_samples_filename)
     logging.info(f"training lin reg on {len(y_train)} samples")
@@ -133,7 +135,8 @@ def train_and_evaluate_model(git_url: str, mlflow_server: str) -> None:
         "coefficient": lin_reg.coef_,
         "intercept": lin_reg.intercept_,
         "model-url": git_url,
-        "model-gitsha": gitsha
+        "model-gitsha": gitsha,
+        "dag-param-model-commit-id": git_commit_id
     })
     mlflow.sklearn.log_model(lin_reg, "model")
     logging.info(f"sent experiment details to mlflow run {mlflow.active_run().info.run_name}")
@@ -151,8 +154,8 @@ def validate_data():
     check_samples_json_file(test_samples_filename)
 
 
-def train():
-    train_and_evaluate_model(model_git_url, mlflow_server_url)
+def train(model_commit_id=None):
+    train_and_evaluate_model(model_git_url, mlflow_server_url, model_commit_id)
 
 
 # Define some arguments for our DAG
@@ -170,6 +173,10 @@ dag = DAG(
     default_args=default_args,
     description="A ML orchestrated experiment",
     schedule_interval=timedelta(days=1),
+    params={
+        "model_commit_id": None
+    },
+    render_template_as_native_obj=True
 )
 
 with dag:
@@ -190,6 +197,7 @@ with dag:
 
     model_training_task = PythonOperator(
         task_id="model_training",
+        op_kwargs = {"model_commit_id": "{{ params.model_commit_id }}"},
         python_callable=train
     )
 
